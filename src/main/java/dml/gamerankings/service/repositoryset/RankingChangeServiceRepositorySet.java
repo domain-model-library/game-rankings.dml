@@ -1,0 +1,13 @@
+package dml.gamerankings.service.repositoryset;
+
+import dml.gamerankings.repository.PlayerRankingChangeItemRepository;
+import dml.gamerankings.repository.PlayerRankingChangeItemUpdateTaskRepository;
+import dml.gamerankings.repository.PlayerRankingChangeItemUpdateTaskSegmentRepository;
+
+public interface RankingChangeServiceRepositorySet {
+    PlayerRankingChangeItemRepository getPlayerRankingChangeItemRepository();
+
+    PlayerRankingChangeItemUpdateTaskRepository getPlayerRankingChangeItemUpdateTaskRepository();
+
+    PlayerRankingChangeItemUpdateTaskSegmentRepository getPlayerRankingChangeItemUpdateTaskSegmentRepository();
+}

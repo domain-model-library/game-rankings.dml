@@ -1,0 +1,7 @@
+package dml.gamerankings.repository;
+
+import dml.gamerankings.entity.PlayerRankingChangeItemResetTaskSegment;
+import dml.largescaletaskmanagement.repository.LargeScaleTaskSegmentRepository;
+
+public interface PlayerRankingChangeItemResetTaskSegmentRepository extends LargeScaleTaskSegmentRepository<PlayerRankingChangeItemResetTaskSegment, String> {
+}
