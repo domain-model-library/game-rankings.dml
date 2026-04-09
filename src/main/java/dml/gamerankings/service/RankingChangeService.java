@@ -62,6 +62,40 @@ public class RankingChangeService {
                 rankedItemsToUpdate, currentTime, itemsUpdateBatchSize);
     }
 
+    public static void recordRankingChangeAnyWay(RankingChangeServiceRepositorySet repositorySet,
+                                                 List<PlayerRankingItem> allRankedItems, int topN, long currentTime,
+                                                 int itemsUpdateBatchSize) {
+        PlayerRankingChangeItemRepository playerRankingChangeItemRepository = repositorySet.getPlayerRankingChangeItemRepository();
+        PlayerRankingChangeItemUpdateTaskRepository playerRankingChangeItemUpdateTaskRepository = repositorySet.getPlayerRankingChangeItemUpdateTaskRepository();
+        PlayerRankingChangeItemUpdateTaskSegmentRepository playerRankingChangeItemUpdateTaskSegmentRepository = repositorySet.getPlayerRankingChangeItemUpdateTaskSegmentRepository();
+
+        if (allRankedItems == null || allRankedItems.isEmpty()) {
+            return;
+        }
+        for (int i = 0; i < allRankedItems.size(); i++) {
+            PlayerRankingItem playerRankingItem = allRankedItems.get(i);
+            if (i < topN) {
+                PlayerRankingChangeItem playerRankingChangeItem = playerRankingChangeItemRepository.take(playerRankingItem.getPlayerId().toString());
+                if (playerRankingChangeItem == null) {
+                    PlayerRankingChangeItem newPlayerRankingChangeItem = new PlayerRankingChangeItem();
+                    newPlayerRankingChangeItem.setPlayerId(playerRankingItem.getPlayerId().toString());
+                    playerRankingChangeItem = playerRankingChangeItemRepository.takeOrPutIfAbsent(playerRankingItem.getPlayerId().toString(),
+                            newPlayerRankingChangeItem);
+                }
+                playerRankingChangeItem.update(playerRankingItem.getRank());
+            } else {
+                break;
+            }
+        }
+        //从allRankedItems中刨去topN个
+        List<PlayerRankingItem> rankedItemsToUpdate = allRankedItems.subList(Math.min(topN, allRankedItems.size()), allRankedItems.size());
+
+        submitRankingChangeItemUpdateTask(
+                playerRankingChangeItemUpdateTaskRepository,
+                playerRankingChangeItemUpdateTaskSegmentRepository,
+                rankedItemsToUpdate, currentTime, itemsUpdateBatchSize);
+    }
+
     private static void submitRankingChangeItemUpdateTask(
             PlayerRankingChangeItemUpdateTaskRepository playerRankingChangeItemUpdateTaskRepository,
             PlayerRankingChangeItemUpdateTaskSegmentRepository playerRankingChangeItemUpdateTaskSegmentRepository,

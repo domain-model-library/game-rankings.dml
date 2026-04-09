@@ -43,6 +43,24 @@ public class RankingService {
         playerRankingItem.setMetricValue(metricValue);
     }
 
+    public static void setRankingMetricValueAnyWay(RankingServiceRepositorySet repositorySet,
+                                                   Object playerId, long metricValue, PlayerRankingItem newPlayerRankingItem) {
+        PlayerRankingItemRepository<PlayerRankingItem, Object> playerRankingItemRepository = repositorySet.getPlayerRankingItemRepository();
+
+        newPlayerRankingItem.setPlayerId(playerId);
+        PlayerRankingItem playerRankingItem = playerRankingItemRepository.takeOrPutIfAbsent(playerId, newPlayerRankingItem);
+        playerRankingItem.setMetricValue(metricValue);
+    }
+
+    public static void addRankingMetricValueAnyWay(RankingServiceRepositorySet repositorySet,
+                                                   Object playerId, long metricValueToAdd, PlayerRankingItem newPlayerRankingItem) {
+        PlayerRankingItemRepository<PlayerRankingItem, Object> playerRankingItemRepository = repositorySet.getPlayerRankingItemRepository();
+
+        newPlayerRankingItem.setPlayerId(playerId);
+        PlayerRankingItem playerRankingItem = playerRankingItemRepository.takeOrPutIfAbsent(playerId, newPlayerRankingItem);
+        playerRankingItem.setMetricValue(playerRankingItem.getMetricValue() + metricValueToAdd);
+    }
+
     public static CalculateRankingResult calculateRanking(RankingServiceRepositorySet repositorySet,
                                                           List<PlayerRankingItem> allRankingItems,
                                                           Leaderboard newLeaderboard,
