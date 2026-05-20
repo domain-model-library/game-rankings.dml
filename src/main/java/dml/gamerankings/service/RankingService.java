@@ -190,7 +190,7 @@ public class RankingService {
     }
 
     public static PlayerRankingItem getPlayerRankingItem(RankingServiceRepositorySet repositorySet,
-                                                         long playerId) {
+                                                         Object playerId) {
         PlayerRankingItemRepository<PlayerRankingItem, Object> playerRankingItemRepository = repositorySet.getPlayerRankingItemRepository();
         return playerRankingItemRepository.find(playerId);
     }
