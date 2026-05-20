@@ -1,6 +1,7 @@
 import dml.common.repository.TestCommonRepository;
 import dml.common.repository.TestCommonSingletonRepository;
 import dml.gamerankings.entity.PlayerRankingChangeItem;
+import dml.gamerankings.entity.PlayerRank;
 import dml.gamerankings.entity.PlayerRankingItem;
 import dml.gamerankings.repository.*;
 import dml.gamerankings.service.RankingChangeResetService;
@@ -32,49 +33,39 @@ public class Test {
         long playerId9 = 9;
         long playerId10 = 10;
 
-        //给10个玩家创建排行项
-        RankingService.createRankingItem(rankingServiceRepositorySet,
-                new TestPlayerRankingItem(), playerId1);
-        RankingService.createRankingItem(rankingServiceRepositorySet,
-                new TestPlayerRankingItem(), playerId2);
-        RankingService.createRankingItem(rankingServiceRepositorySet,
-                new TestPlayerRankingItem(), playerId3);
-        RankingService.createRankingItem(rankingServiceRepositorySet,
-                new TestPlayerRankingItem(), playerId4);
-        RankingService.createRankingItem(rankingServiceRepositorySet,
-                new TestPlayerRankingItem(), playerId5);
-        RankingService.createRankingItem(rankingServiceRepositorySet,
-                new TestPlayerRankingItem(), playerId6);
-        RankingService.createRankingItem(rankingServiceRepositorySet,
-                new TestPlayerRankingItem(), playerId7);
-        RankingService.createRankingItem(rankingServiceRepositorySet,
-                new TestPlayerRankingItem(), playerId8);
-        RankingService.createRankingItem(rankingServiceRepositorySet,
-                new TestPlayerRankingItem(), playerId9);
-        RankingService.createRankingItem(rankingServiceRepositorySet,
-                new TestPlayerRankingItem(), playerId10);
+        //给10个玩家创建排行结果(PlayerRank)
+        RankingService.createPlayerRank(rankingServiceRepositorySet,
+                new TestPlayerRank(), playerId1);
+        RankingService.createPlayerRank(rankingServiceRepositorySet,
+                new TestPlayerRank(), playerId2);
+        RankingService.createPlayerRank(rankingServiceRepositorySet,
+                new TestPlayerRank(), playerId3);
+        RankingService.createPlayerRank(rankingServiceRepositorySet,
+                new TestPlayerRank(), playerId4);
+        RankingService.createPlayerRank(rankingServiceRepositorySet,
+                new TestPlayerRank(), playerId5);
+        RankingService.createPlayerRank(rankingServiceRepositorySet,
+                new TestPlayerRank(), playerId6);
+        RankingService.createPlayerRank(rankingServiceRepositorySet,
+                new TestPlayerRank(), playerId7);
+        RankingService.createPlayerRank(rankingServiceRepositorySet,
+                new TestPlayerRank(), playerId8);
+        RankingService.createPlayerRank(rankingServiceRepositorySet,
+                new TestPlayerRank(), playerId9);
+        RankingService.createPlayerRank(rankingServiceRepositorySet,
+                new TestPlayerRank(), playerId10);
 
-        //给10个玩家的排行项设置排行指标值
-        RankingService.setRankingMetricValue(rankingServiceRepositorySet,
-                playerId1, 10);
-        RankingService.setRankingMetricValue(rankingServiceRepositorySet,
-                playerId2, 20);
-        RankingService.setRankingMetricValue(rankingServiceRepositorySet,
-                playerId3, 30);
-        RankingService.setRankingMetricValue(rankingServiceRepositorySet,
-                playerId4, 40);
-        RankingService.setRankingMetricValue(rankingServiceRepositorySet,
-                playerId5, 50);
-        RankingService.setRankingMetricValue(rankingServiceRepositorySet,
-                playerId6, 60);
-        RankingService.setRankingMetricValue(rankingServiceRepositorySet,
-                playerId7, 70);
-        RankingService.setRankingMetricValue(rankingServiceRepositorySet,
-                playerId8, 80);
-        RankingService.setRankingMetricValue(rankingServiceRepositorySet,
-                playerId9, 90);
-        RankingService.setRankingMetricValue(rankingServiceRepositorySet,
-                playerId10, 100);
+        //给10个玩家的排行结果设置排行指标值（模拟游戏里的原始排行指标值）
+        ((TestPlayerRank) playerRankRepository.find(playerId1)).setMetricValue(10);
+        ((TestPlayerRank) playerRankRepository.find(playerId2)).setMetricValue(20);
+        ((TestPlayerRank) playerRankRepository.find(playerId3)).setMetricValue(30);
+        ((TestPlayerRank) playerRankRepository.find(playerId4)).setMetricValue(40);
+        ((TestPlayerRank) playerRankRepository.find(playerId5)).setMetricValue(50);
+        ((TestPlayerRank) playerRankRepository.find(playerId6)).setMetricValue(60);
+        ((TestPlayerRank) playerRankRepository.find(playerId7)).setMetricValue(70);
+        ((TestPlayerRank) playerRankRepository.find(playerId8)).setMetricValue(80);
+        ((TestPlayerRank) playerRankRepository.find(playerId9)).setMetricValue(90);
+        ((TestPlayerRank) playerRankRepository.find(playerId10)).setMetricValue(100);
 
         //准备计算排行榜需要的参数：榜单取top几，从高到低还是从低到高排名
         int topN = 5;
@@ -88,7 +79,7 @@ public class Test {
                 new TestLeaderboard(),
                 topN, rankingFromHighToLow,
                 currentTime, 10);
-        PlayerRankingItem topItem = result.getLeaderboard().getItemList().get(0);
+        PlayerRank topItem = result.getLeaderboard().getItemList().get(0);
         assert topItem.getPlayerId().equals(playerId10);
         assert topItem.getRank() == 1;
 
@@ -115,26 +106,26 @@ public class Test {
                 playerId10);
 
         //记录玩家排名变化
-        List<PlayerRankingItem> allRankedItems = result.getAllRankedItems();
+        List<PlayerRank> allRankedItems = result.getAllRankedItems();
         RankingChangeService.recordRankingChange(rankingChangeServiceRepositorySet,
                 allRankedItems, topN, currentTime, 10);
 
-        //异步更新RankingItem
+        //异步更新PlayerRank
         long segmentTimeoutMs = 60000;
         long maxTimeToReadyMs = 120000;
-        String taskName = "PlayerRankingItem-update-" + currentTime;
-        String segmentId = RankingService.takePlayerRankingItemUpdateSegmentToExecute(rankingServiceRepositorySet,
+        String taskName = "PlayerRank-update-" + currentTime;
+        String segmentId = RankingService.takePlayerRankUpdateSegmentToExecute(rankingServiceRepositorySet,
                 taskName, currentTime, segmentTimeoutMs, maxTimeToReadyMs);
         assert segmentId != null;
-        int count = RankingService.executePlayerRankingItemUpdateSegment(rankingServiceRepositorySet,
+        int count = RankingService.executePlayerRankUpdateSegment(rankingServiceRepositorySet,
                 segmentId);
         assert count == 10;
-        RankingService.completePlayerRankingItemUpdateSegment(rankingServiceRepositorySet,
+        RankingService.completePlayerRankUpdateSegment(rankingServiceRepositorySet,
                 segmentId);
 
         //验证第5名是否更新
-        PlayerRankingItem playerRankingItem6 = RankingService.getPlayerRankingItem(rankingServiceRepositorySet, playerId6);
-        assert playerRankingItem6.getRank() == 5;
+        PlayerRank playerRank6 = RankingService.getPlayerRank(rankingServiceRepositorySet, playerId6);
+        assert playerRank6.getRank() == 5;
 
         //异步更新PlayerRankingChangeItem
         taskName = "PlayerRankingChangeItem-update-" + currentTime;
@@ -148,8 +139,7 @@ public class Test {
                 segmentId);
 
         //第二名的排行指标增加
-        RankingService.setRankingMetricValue(rankingServiceRepositorySet,
-                playerId9, 110);
+        ((TestPlayerRank) playerRankRepository.find(playerId9)).setMetricValue(110);
 
         //重新计算排行榜
         currentTime += 1000;
@@ -169,15 +159,15 @@ public class Test {
         RankingChangeService.recordRankingChange(rankingChangeServiceRepositorySet,
                 allRankedItems, topN, currentTime, 10);
 
-        //异步更新RankingItem
-        taskName = "PlayerRankingItem-update-" + currentTime;
-        segmentId = RankingService.takePlayerRankingItemUpdateSegmentToExecute(rankingServiceRepositorySet,
+        //异步更新PlayerRank
+        taskName = "PlayerRank-update-" + currentTime;
+        segmentId = RankingService.takePlayerRankUpdateSegmentToExecute(rankingServiceRepositorySet,
                 taskName, currentTime, segmentTimeoutMs, maxTimeToReadyMs);
         assert segmentId != null;
-        count = RankingService.executePlayerRankingItemUpdateSegment(rankingServiceRepositorySet,
+        count = RankingService.executePlayerRankUpdateSegment(rankingServiceRepositorySet,
                 segmentId);
         assert count == 10;
-        RankingService.completePlayerRankingItemUpdateSegment(rankingServiceRepositorySet,
+        RankingService.completePlayerRankUpdateSegment(rankingServiceRepositorySet,
                 segmentId);
 
         //异步更新PlayerRankingChangeItem
@@ -217,23 +207,21 @@ public class Test {
         //验证Leaderboard已被删除
         assert RankingService.getLeaderboard(rankingServiceRepositorySet) == null;
 
-        //异步执行PlayerRankingItem重置任务段
-        String resetTaskName = "PlayerRankingItem-reset-" + currentTime;
-        String resetSegmentId = RankingResetService.takePlayerRankingItemResetSegmentToExecute(rankingResetServiceRepositorySet,
+        //异步执行PlayerRank重置任务段
+        String resetTaskName = "PlayerRank-reset-" + currentTime;
+        String resetSegmentId = RankingResetService.takePlayerRankResetSegmentToExecute(rankingResetServiceRepositorySet,
                 resetTaskName, currentTime, segmentTimeoutMs, maxTimeToReadyMs);
         assert resetSegmentId != null;
-        int resetCount = RankingResetService.executePlayerRankingItemResetSegment(rankingResetServiceRepositorySet,
+        int resetCount = RankingResetService.executePlayerRankResetSegment(rankingResetServiceRepositorySet,
                 resetSegmentId);
         assert resetCount == 10;
-        RankingResetService.completePlayerRankingItemResetSegment(rankingResetServiceRepositorySet,
+        RankingResetService.completePlayerRankResetSegment(rankingResetServiceRepositorySet,
                 resetSegmentId);
 
-        //验证PlayerRankingItem的排行指标和排名都已置零
-        PlayerRankingItem resetItem9 = RankingService.getPlayerRankingItem(rankingServiceRepositorySet, playerId9);
-        assert resetItem9.getMetricValue() == 0;
+        //验证PlayerRank的排名为0，指标值照旧不变
+        PlayerRank resetItem9 = RankingService.getPlayerRank(rankingServiceRepositorySet, playerId9);
         assert resetItem9.getRank() == 0;
-        PlayerRankingItem resetItem10 = RankingService.getPlayerRankingItem(rankingServiceRepositorySet, playerId10);
-        assert resetItem10.getMetricValue() == 0;
+        PlayerRank resetItem10 = RankingService.getPlayerRank(rankingServiceRepositorySet, playerId10);
         assert resetItem10.getRank() == 0;
 
         //重置PlayerRankingChangeItem
@@ -275,35 +263,35 @@ public class Test {
 
     private List<PlayerRankingItem> getAllPlayerRankingItems(long playerId1, long playerId2, long playerId3, long playerId4, long playerId5, long playerId6, long playerId7, long playerId8, long playerId9, long playerId10) {
         List<PlayerRankingItem> allRankingItems = new ArrayList<>();
-        allRankingItems.add(RankingService.getPlayerRankingItem(rankingServiceRepositorySet, playerId1));
-        allRankingItems.add(RankingService.getPlayerRankingItem(rankingServiceRepositorySet, playerId2));
-        allRankingItems.add(RankingService.getPlayerRankingItem(rankingServiceRepositorySet, playerId3));
-        allRankingItems.add(RankingService.getPlayerRankingItem(rankingServiceRepositorySet, playerId4));
-        allRankingItems.add(RankingService.getPlayerRankingItem(rankingServiceRepositorySet, playerId5));
-        allRankingItems.add(RankingService.getPlayerRankingItem(rankingServiceRepositorySet, playerId6));
-        allRankingItems.add(RankingService.getPlayerRankingItem(rankingServiceRepositorySet, playerId7));
-        allRankingItems.add(RankingService.getPlayerRankingItem(rankingServiceRepositorySet, playerId8));
-        allRankingItems.add(RankingService.getPlayerRankingItem(rankingServiceRepositorySet, playerId9));
-        allRankingItems.add(RankingService.getPlayerRankingItem(rankingServiceRepositorySet, playerId10));
+        allRankingItems.add(new PlayerRankingItem(playerId1, ((TestPlayerRank) playerRankRepository.find(playerId1)).getMetricValue()));
+        allRankingItems.add(new PlayerRankingItem(playerId2, ((TestPlayerRank) playerRankRepository.find(playerId2)).getMetricValue()));
+        allRankingItems.add(new PlayerRankingItem(playerId3, ((TestPlayerRank) playerRankRepository.find(playerId3)).getMetricValue()));
+        allRankingItems.add(new PlayerRankingItem(playerId4, ((TestPlayerRank) playerRankRepository.find(playerId4)).getMetricValue()));
+        allRankingItems.add(new PlayerRankingItem(playerId5, ((TestPlayerRank) playerRankRepository.find(playerId5)).getMetricValue()));
+        allRankingItems.add(new PlayerRankingItem(playerId6, ((TestPlayerRank) playerRankRepository.find(playerId6)).getMetricValue()));
+        allRankingItems.add(new PlayerRankingItem(playerId7, ((TestPlayerRank) playerRankRepository.find(playerId7)).getMetricValue()));
+        allRankingItems.add(new PlayerRankingItem(playerId8, ((TestPlayerRank) playerRankRepository.find(playerId8)).getMetricValue()));
+        allRankingItems.add(new PlayerRankingItem(playerId9, ((TestPlayerRank) playerRankRepository.find(playerId9)).getMetricValue()));
+        allRankingItems.add(new PlayerRankingItem(playerId10, ((TestPlayerRank) playerRankRepository.find(playerId10)).getMetricValue()));
         return allRankingItems;
     }
 
-    PlayerRankingItemRepository playerRankingItemRepository = TestCommonRepository.instance(PlayerRankingItemRepository.class);
+    PlayerRankRepository playerRankRepository = TestCommonRepository.instance(PlayerRankRepository.class);
     LeaderboardRepository leaderboardRepository = TestCommonSingletonRepository.instance(LeaderboardRepository.class);
-    PlayerRankingItemUpdateTaskRepository playerRankingItemUpdateTaskRepository = TestCommonRepository.instance(PlayerRankingItemUpdateTaskRepository.class);
-    PlayerRankingItemUpdateTaskSegmentRepository playerRankingItemUpdateTaskSegmentRepository = TestCommonRepository.instance(PlayerRankingItemUpdateTaskSegmentRepository.class);
+    PlayerRankUpdateTaskRepository playerRankUpdateTaskRepository = TestCommonRepository.instance(PlayerRankUpdateTaskRepository.class);
+    PlayerRankUpdateTaskSegmentRepository playerRankUpdateTaskSegmentRepository = TestCommonRepository.instance(PlayerRankUpdateTaskSegmentRepository.class);
     PlayerRankingChangeItemRepository playerRankingChangeItemRepository = TestCommonRepository.instance(PlayerRankingChangeItemRepository.class);
     PlayerRankingChangeItemUpdateTaskRepository playerRankingChangeItemUpdateTaskRepository = TestCommonRepository.instance(PlayerRankingChangeItemUpdateTaskRepository.class);
     PlayerRankingChangeItemUpdateTaskSegmentRepository playerRankingChangeItemUpdateTaskSegmentRepository = TestCommonRepository.instance(PlayerRankingChangeItemUpdateTaskSegmentRepository.class);
-    PlayerRankingItemResetTaskRepository playerRankingItemResetTaskRepository = TestCommonRepository.instance(PlayerRankingItemResetTaskRepository.class);
-    PlayerRankingItemResetTaskSegmentRepository playerRankingItemResetTaskSegmentRepository = TestCommonRepository.instance(PlayerRankingItemResetTaskSegmentRepository.class);
+    PlayerRankResetTaskRepository playerRankResetTaskRepository = TestCommonRepository.instance(PlayerRankResetTaskRepository.class);
+    PlayerRankResetTaskSegmentRepository playerRankResetTaskSegmentRepository = TestCommonRepository.instance(PlayerRankResetTaskSegmentRepository.class);
     PlayerRankingChangeItemResetTaskRepository playerRankingChangeItemResetTaskRepository = TestCommonRepository.instance(PlayerRankingChangeItemResetTaskRepository.class);
     PlayerRankingChangeItemResetTaskSegmentRepository playerRankingChangeItemResetTaskSegmentRepository = TestCommonRepository.instance(PlayerRankingChangeItemResetTaskSegmentRepository.class);
 
     RankingServiceRepositorySet rankingServiceRepositorySet = new RankingServiceRepositorySet() {
         @Override
-        public PlayerRankingItemRepository getPlayerRankingItemRepository() {
-            return playerRankingItemRepository;
+        public PlayerRankRepository getPlayerRankRepository() {
+            return playerRankRepository;
         }
 
         @Override
@@ -312,13 +300,13 @@ public class Test {
         }
 
         @Override
-        public PlayerRankingItemUpdateTaskRepository getPlayerRankingItemUpdateTaskRepository() {
-            return playerRankingItemUpdateTaskRepository;
+        public PlayerRankUpdateTaskRepository getPlayerRankUpdateTaskRepository() {
+            return playerRankUpdateTaskRepository;
         }
 
         @Override
-        public PlayerRankingItemUpdateTaskSegmentRepository getPlayerRankingItemUpdateTaskSegmentRepository() {
-            return playerRankingItemUpdateTaskSegmentRepository;
+        public PlayerRankUpdateTaskSegmentRepository getPlayerRankUpdateTaskSegmentRepository() {
+            return playerRankUpdateTaskSegmentRepository;
         }
     };
 
@@ -343,8 +331,8 @@ public class Test {
     RankingResetServiceRepositorySet rankingResetServiceRepositorySet = new RankingResetServiceRepositorySet() {
 
         @Override
-        public PlayerRankingItemRepository getPlayerRankingItemRepository() {
-            return playerRankingItemRepository;
+        public PlayerRankRepository getPlayerRankRepository() {
+            return playerRankRepository;
         }
 
         @Override
@@ -353,13 +341,13 @@ public class Test {
         }
 
         @Override
-        public PlayerRankingItemResetTaskRepository getPlayerRankingItemResetTaskRepository() {
-            return playerRankingItemResetTaskRepository;
+        public PlayerRankResetTaskRepository getPlayerRankResetTaskRepository() {
+            return playerRankResetTaskRepository;
         }
 
         @Override
-        public PlayerRankingItemResetTaskSegmentRepository getPlayerRankingItemResetTaskSegmentRepository() {
-            return playerRankingItemResetTaskSegmentRepository;
+        public PlayerRankResetTaskSegmentRepository getPlayerRankResetTaskSegmentRepository() {
+            return playerRankResetTaskSegmentRepository;
         }
     };
 

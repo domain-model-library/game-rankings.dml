@@ -4,14 +4,14 @@ import dml.largescaletaskmanagement.entity.LargeScaleTaskSegmentBase;
 
 import java.util.List;
 
-public class PlayerRankingItemResetTaskSegment extends LargeScaleTaskSegmentBase {
+public class PlayerRankResetTaskSegment extends LargeScaleTaskSegmentBase {
     private String id;
     private List<Object> playerIdList;
 
-    public PlayerRankingItemResetTaskSegment() {
+    public PlayerRankResetTaskSegment() {
     }
 
-    public PlayerRankingItemResetTaskSegment(String id) {
+    public PlayerRankResetTaskSegment(String id) {
         this.id = id;
     }
 

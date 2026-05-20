@@ -4,15 +4,18 @@ import dml.largescaletaskmanagement.entity.LargeScaleTaskSegmentBase;
 
 import java.util.List;
 
-
-public class PlayerRankingChangeItemUpdateTaskSegment extends LargeScaleTaskSegmentBase {
+/**
+ * PlayerRank 批量更新任务段实体。
+ * 包含一批需要更新的 PlayerRank 记录。
+ */
+public class PlayerRankUpdateTaskSegment extends LargeScaleTaskSegmentBase {
     private String id;
     private List<PlayerRank> playerRankList;
 
-    public PlayerRankingChangeItemUpdateTaskSegment() {
+    public PlayerRankUpdateTaskSegment() {
     }
 
-    public PlayerRankingChangeItemUpdateTaskSegment(String id) {
+    public PlayerRankUpdateTaskSegment(String id) {
         this.id = id;
     }
 

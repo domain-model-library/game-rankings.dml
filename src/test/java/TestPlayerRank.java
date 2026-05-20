@@ -1,6 +1,6 @@
-import dml.gamerankings.entity.PlayerRankingItem;
+import dml.gamerankings.entity.PlayerRank;
 
-public class TestPlayerRankingItem implements PlayerRankingItem {
+public class TestPlayerRank implements PlayerRank {
     private long playerId;
     private long metricValue;
     private int rank;
@@ -10,16 +10,15 @@ public class TestPlayerRankingItem implements PlayerRankingItem {
         this.playerId = (Long) playerId;
     }
 
-    @Override
     public void setMetricValue(long metricValue) {
         this.metricValue = metricValue;
     }
 
+    @Override
     public Object getPlayerId() {
         return playerId;
     }
 
-    @Override
     public long getMetricValue() {
         return metricValue;
     }

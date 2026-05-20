@@ -1,12 +1,12 @@
 package dml.gamerankings.service;
 
-import dml.gamerankings.entity.PlayerRankingItem;
-import dml.gamerankings.entity.PlayerRankingItemResetTask;
-import dml.gamerankings.entity.PlayerRankingItemResetTaskSegment;
+import dml.gamerankings.entity.PlayerRank;
+import dml.gamerankings.entity.PlayerRankResetTask;
+import dml.gamerankings.entity.PlayerRankResetTaskSegment;
 import dml.gamerankings.repository.LeaderboardRepository;
-import dml.gamerankings.repository.PlayerRankingItemRepository;
-import dml.gamerankings.repository.PlayerRankingItemResetTaskRepository;
-import dml.gamerankings.repository.PlayerRankingItemResetTaskSegmentRepository;
+import dml.gamerankings.repository.PlayerRankRepository;
+import dml.gamerankings.repository.PlayerRankResetTaskRepository;
+import dml.gamerankings.repository.PlayerRankResetTaskSegmentRepository;
 import dml.gamerankings.service.repositoryset.RankingResetServiceRepositorySet;
 import dml.largescaletaskmanagement.entity.ResetSegmentToProcessIfTimeout;
 import dml.largescaletaskmanagement.repository.LargeScaleTaskRepository;
@@ -27,29 +27,29 @@ public class RankingResetService {
         LeaderboardRepository leaderboardRepository = repositorySet.getLeaderboardRepository();
         leaderboardRepository.remove();
 
-        submitRankingItemResetTask(repositorySet, allPlayerIds, currentTime, itemsUpdateBatchSize);
+        submitPlayerRankResetTask(repositorySet, allPlayerIds, currentTime, itemsUpdateBatchSize);
     }
 
-    private static void submitRankingItemResetTask(RankingResetServiceRepositorySet repositorySet,
+    private static void submitPlayerRankResetTask(RankingResetServiceRepositorySet repositorySet,
                                                    List<Object> allPlayerIds, long currentTime,
                                                    int itemsUpdateBatchSize) {
         if (allPlayerIds == null || allPlayerIds.isEmpty()) {
             return;
         }
-        PlayerRankingItemResetTaskRepository playerRankingItemResetTaskRepository = repositorySet.getPlayerRankingItemResetTaskRepository();
-        PlayerRankingItemResetTaskSegmentRepository playerRankingItemResetTaskSegmentRepository = repositorySet.getPlayerRankingItemResetTaskSegmentRepository();
+        PlayerRankResetTaskRepository playerRankResetTaskRepository = repositorySet.getPlayerRankResetTaskRepository();
+        PlayerRankResetTaskSegmentRepository playerRankResetTaskSegmentRepository = repositorySet.getPlayerRankResetTaskSegmentRepository();
 
-        String taskName = "PlayerRankingItem-reset-" + currentTime;
-        PlayerRankingItemResetTask task = new PlayerRankingItemResetTask();
+        String taskName = "PlayerRank-reset-" + currentTime;
+        PlayerRankResetTask task = new PlayerRankResetTask();
         LargeScaleTaskServiceRepositorySet largeScaleTaskServiceRepositorySet =
-                getLargeScaleTaskServiceRepositorySet(playerRankingItemResetTaskRepository, playerRankingItemResetTaskSegmentRepository);
+                getLargeScaleTaskServiceRepositorySet(playerRankResetTaskRepository, playerRankResetTaskSegmentRepository);
         LargeScaleTaskService.createTask(largeScaleTaskServiceRepositorySet, taskName, task, currentTime);
 
         for (int i = 0; i < allPlayerIds.size(); i += itemsUpdateBatchSize) {
             int endIdx = Math.min(i + itemsUpdateBatchSize, allPlayerIds.size());
             List<Object> batch = allPlayerIds.subList(i, endIdx);
             String segmentId = taskName + "-" + i;
-            PlayerRankingItemResetTaskSegment segment = new PlayerRankingItemResetTaskSegment(segmentId);
+            PlayerRankResetTaskSegment segment = new PlayerRankResetTaskSegment(segmentId);
             segment.setPlayerIdList(new ArrayList<>(batch));
             LargeScaleTaskService.addTaskSegment(largeScaleTaskServiceRepositorySet, taskName, segment);
         }
@@ -57,18 +57,18 @@ public class RankingResetService {
     }
 
     private static LargeScaleTaskServiceRepositorySet getLargeScaleTaskServiceRepositorySet(
-            PlayerRankingItemResetTaskRepository playerRankingItemResetTaskRepository,
-            PlayerRankingItemResetTaskSegmentRepository playerRankingItemResetTaskSegmentRepository) {
+            PlayerRankResetTaskRepository playerRankResetTaskRepository,
+            PlayerRankResetTaskSegmentRepository playerRankResetTaskSegmentRepository) {
         return new LargeScaleTaskServiceRepositorySet() {
 
             @Override
             public LargeScaleTaskRepository getLargeScaleTaskRepository() {
-                return playerRankingItemResetTaskRepository;
+                return playerRankResetTaskRepository;
             }
 
             @Override
             public LargeScaleTaskSegmentRepository getLargeScaleTaskSegmentRepository() {
-                return playerRankingItemResetTaskSegmentRepository;
+                return playerRankResetTaskSegmentRepository;
             }
 
             @Override
@@ -108,8 +108,8 @@ public class RankingResetService {
         };
     }
 
-    public static String takePlayerRankingItemResetSegmentToExecute(RankingResetServiceRepositorySet repositorySet,
-                                                                     String taskName, long currentTime, long segmentTimeoutMs, long maxTimeToReadyMs) {
+    public static String takePlayerRankResetSegmentToExecute(RankingResetServiceRepositorySet repositorySet,
+                                                             String taskName, long currentTime, long segmentTimeoutMs, long maxTimeToReadyMs) {
         LargeScaleTaskServiceRepositorySet largeScaleTaskServiceRepositorySet = getLargeScaleTaskServiceRepositorySet(repositorySet);
 
         TakeTaskSegmentToExecuteResult result = LargeScaleTaskService.takeTaskSegmentToExecute(
@@ -124,19 +124,19 @@ public class RankingResetService {
     }
 
     private static LargeScaleTaskServiceRepositorySet getLargeScaleTaskServiceRepositorySet(RankingResetServiceRepositorySet repositorySet) {
-        PlayerRankingItemResetTaskRepository playerRankingItemResetTaskRepository = repositorySet.getPlayerRankingItemResetTaskRepository();
-        PlayerRankingItemResetTaskSegmentRepository playerRankingItemResetTaskSegmentRepository = repositorySet.getPlayerRankingItemResetTaskSegmentRepository();
+        PlayerRankResetTaskRepository playerRankResetTaskRepository = repositorySet.getPlayerRankResetTaskRepository();
+        PlayerRankResetTaskSegmentRepository playerRankResetTaskSegmentRepository = repositorySet.getPlayerRankResetTaskSegmentRepository();
         LargeScaleTaskServiceRepositorySet largeScaleTaskServiceRepositorySet =
-                getLargeScaleTaskServiceRepositorySet(playerRankingItemResetTaskRepository, playerRankingItemResetTaskSegmentRepository);
+                getLargeScaleTaskServiceRepositorySet(playerRankResetTaskRepository, playerRankResetTaskSegmentRepository);
         return largeScaleTaskServiceRepositorySet;
     }
 
-    public static int executePlayerRankingItemResetSegment(RankingResetServiceRepositorySet repositorySet,
-                                                           String segmentId) {
-        PlayerRankingItemResetTaskSegmentRepository playerRankingItemResetTaskSegmentRepository = repositorySet.getPlayerRankingItemResetTaskSegmentRepository();
-        PlayerRankingItemRepository<PlayerRankingItem, Object> playerRankingItemRepository = repositorySet.getPlayerRankingItemRepository();
+    public static int executePlayerRankResetSegment(RankingResetServiceRepositorySet repositorySet,
+                                                    String segmentId) {
+        PlayerRankResetTaskSegmentRepository playerRankResetTaskSegmentRepository = repositorySet.getPlayerRankResetTaskSegmentRepository();
+        PlayerRankRepository<PlayerRank, Object> playerRankRepository = repositorySet.getPlayerRankRepository();
 
-        PlayerRankingItemResetTaskSegment segment = playerRankingItemResetTaskSegmentRepository.find(segmentId);
+        PlayerRankResetTaskSegment segment = playerRankResetTaskSegmentRepository.find(segmentId);
         if (segment == null) {
             return 0;
         }
@@ -145,17 +145,16 @@ public class RankingResetService {
             return 0;
         }
         for (Object playerId : playerIdList) {
-            PlayerRankingItem existing = playerRankingItemRepository.take(playerId);
+            PlayerRank existing = playerRankRepository.take(playerId);
             if (existing != null) {
-                existing.setMetricValue(0);
                 existing.setRank(0);
             }
         }
         return playerIdList.size();
     }
 
-    public static void completePlayerRankingItemResetSegment(RankingResetServiceRepositorySet repositorySet,
-                                                              String segmentId) {
+    public static void completePlayerRankResetSegment(RankingResetServiceRepositorySet repositorySet,
+                                                      String segmentId) {
         LargeScaleTaskServiceRepositorySet largeScaleTaskServiceRepositorySet = getLargeScaleTaskServiceRepositorySet(repositorySet);
 
         LargeScaleTaskService.completeTaskSegment(largeScaleTaskServiceRepositorySet, segmentId);

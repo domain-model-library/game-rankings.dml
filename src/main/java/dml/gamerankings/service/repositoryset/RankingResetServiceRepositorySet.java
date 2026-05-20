@@ -1,16 +1,16 @@
 package dml.gamerankings.service.repositoryset;
 
 import dml.gamerankings.repository.LeaderboardRepository;
-import dml.gamerankings.repository.PlayerRankingItemRepository;
-import dml.gamerankings.repository.PlayerRankingItemResetTaskRepository;
-import dml.gamerankings.repository.PlayerRankingItemResetTaskSegmentRepository;
+import dml.gamerankings.repository.PlayerRankRepository;
+import dml.gamerankings.repository.PlayerRankResetTaskRepository;
+import dml.gamerankings.repository.PlayerRankResetTaskSegmentRepository;
 
 public interface RankingResetServiceRepositorySet {
-    PlayerRankingItemRepository getPlayerRankingItemRepository();
+    PlayerRankRepository getPlayerRankRepository();
 
     LeaderboardRepository getLeaderboardRepository();
 
-    PlayerRankingItemResetTaskRepository getPlayerRankingItemResetTaskRepository();
+    PlayerRankResetTaskRepository getPlayerRankResetTaskRepository();
 
-    PlayerRankingItemResetTaskSegmentRepository getPlayerRankingItemResetTaskSegmentRepository();
+    PlayerRankResetTaskSegmentRepository getPlayerRankResetTaskSegmentRepository();
 }

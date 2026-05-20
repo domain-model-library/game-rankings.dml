@@ -3,7 +3,7 @@ package dml.gamerankings.entity;
 import java.util.List;
 
 public interface Leaderboard {
-    void setItemList(List<PlayerRankingItem> itemList);
+    void setItemList(List<PlayerRank> itemList);
 
-    List<PlayerRankingItem> getItemList();
+    List<PlayerRank> getItemList();
 }

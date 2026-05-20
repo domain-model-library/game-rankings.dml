@@ -1,15 +1,15 @@
 package dml.gamerankings.service.result;
 
 import dml.gamerankings.entity.Leaderboard;
-import dml.gamerankings.entity.PlayerRankingItem;
+import dml.gamerankings.entity.PlayerRank;
 
 import java.util.List;
 
 public class CalculateRankingResult {
     private final Leaderboard leaderboard;
-    private final List<PlayerRankingItem> allRankedItems;
+    private final List<PlayerRank> allRankedItems;
 
-    public CalculateRankingResult(Leaderboard leaderboard, List<PlayerRankingItem> allRankedItems) {
+    public CalculateRankingResult(Leaderboard leaderboard, List<PlayerRank> allRankedItems) {
         this.leaderboard = leaderboard;
         this.allRankedItems = allRankedItems;
     }
@@ -18,7 +18,7 @@ public class CalculateRankingResult {
         return leaderboard;
     }
 
-    public List<PlayerRankingItem> getAllRankedItems() {
+    public List<PlayerRank> getAllRankedItems() {
         return allRankedItems;
     }
 }

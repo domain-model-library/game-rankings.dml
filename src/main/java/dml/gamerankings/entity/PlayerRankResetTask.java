@@ -2,7 +2,7 @@ package dml.gamerankings.entity;
 
 import dml.largescaletaskmanagement.entity.LargeScaleTaskBase;
 
-public class PlayerRankingItemResetTask extends LargeScaleTaskBase {
+public class PlayerRankResetTask extends LargeScaleTaskBase {
     private String name;
 
     @Override
