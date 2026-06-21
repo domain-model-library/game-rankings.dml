@@ -1,6 +1,7 @@
 package dml.gamerankings.service;
 
 import dml.gamerankings.entity.Leaderboard;
+import dml.gamerankings.entity.RankItem;
 import dml.gamerankings.entity.PlayerRank;
 import dml.gamerankings.entity.PlayerRankUpdateTask;
 import dml.gamerankings.entity.PlayerRankUpdateTaskSegment;
@@ -41,7 +42,6 @@ public class RankingService {
                                                           Leaderboard newLeaderboard,
                                                           int topN, boolean rankingFromHighToLow,
                                                           long currentTime, int itemsUpdateBatchSize) {
-        PlayerRankRepository<PlayerRank, Object> playerRankRepository = repositorySet.getPlayerRankRepository();
 
         PlayerRankingItem[] items = allRankingItems.toArray(new PlayerRankingItem[0]);
         int n = items.length;
@@ -62,21 +62,20 @@ public class RankingService {
         // Walk the sorted array assigning ranks 1..n.
         // rankingFromHighToLow=true  → highest encoded value (= highest metric) is rank 1, iterate backwards.
         // rankingFromHighToLow=false → lowest encoded value (= lowest metric) is rank 1, iterate forwards.
+        // Pure in-memory computation: no database access (no take/find).
+        // Only build RankItem value objects describing (playerId, rank).
         long indexMask = (1L << indexBits) - 1;
-        List<PlayerRank> allRankedItems = new ArrayList<>(n);
-        List<PlayerRank> topItems = new ArrayList<>(Math.min(topN, n));
+        List<RankItem> allRankedItems = new ArrayList<>(n);
+        List<RankItem> topItems = new ArrayList<>(Math.min(topN, n));
 
         for (int rank = 1; rank <= n; rank++) {
             int sortedPos = rankingFromHighToLow ? (n - rank) : (rank - 1);
             int itemIndex = (int) (encoded[sortedPos] & indexMask);
             PlayerRankingItem item = items[itemIndex];
-            PlayerRank playerRank = playerRankRepository.take(item.getPlayerId());
-            if (playerRank != null) {
-                playerRank.setRank(rank);
-                allRankedItems.add(playerRank);
-                if (rank <= topN) {
-                    topItems.add(playerRank);
-                }
+            RankItem rankItem = new RankItem(item.getPlayerId(), rank);
+            allRankedItems.add(rankItem);
+            if (rank <= topN) {
+                topItems.add(rankItem);
             }
         }
 
@@ -95,7 +94,7 @@ public class RankingService {
 
     private static void submitPlayerRankUpdateTask(PlayerRankUpdateTaskRepository playerRankUpdateTaskRepository,
                                                    PlayerRankUpdateTaskSegmentRepository playerRankUpdateTaskSegmentRepository,
-                                                   List<PlayerRank> allRankedItems, long currentTime,
+                                                   List<RankItem> allRankedItems, long currentTime,
                                                    int itemsUpdateBatchSize) {
         if (allRankedItems == null || allRankedItems.isEmpty()) {
             return;
@@ -108,10 +107,10 @@ public class RankingService {
 
         for (int i = 0; i < allRankedItems.size(); i += itemsUpdateBatchSize) {
             int endIdx = Math.min(i + itemsUpdateBatchSize, allRankedItems.size());
-            List<PlayerRank> batch = allRankedItems.subList(i, endIdx);
+            List<RankItem> batch = allRankedItems.subList(i, endIdx);
             String segmentId = taskName + "-" + i;
             PlayerRankUpdateTaskSegment segment = new PlayerRankUpdateTaskSegment(segmentId);
-            segment.setPlayerRankList(new ArrayList<>(batch));
+            segment.setRankItemList(new ArrayList<>(batch));
             LargeScaleTaskService.addTaskSegment(largeScaleTaskServiceRepositorySet, taskName, segment);
         }
         LargeScaleTaskService.setTaskReadyToProcess(largeScaleTaskServiceRepositorySet, taskName);
@@ -207,19 +206,17 @@ public class RankingService {
         if (segment == null) {
             return 0;
         }
-        List<PlayerRank> playerRankList = segment.getPlayerRankList();
-        if (playerRankList == null || playerRankList.isEmpty()) {
+        List<RankItem> rankItemList = segment.getRankItemList();
+        if (rankItemList == null || rankItemList.isEmpty()) {
             return 0;
         }
-        for (PlayerRank item : playerRankList) {
+        for (RankItem item : rankItemList) {
             PlayerRank existing = playerRankRepository.take(item.getPlayerId());
-            if (existing == null) {
-                playerRankRepository.put(item);
-            } else {
+            if (existing != null) {
                 existing.setRank(item.getRank());
             }
         }
-        return playerRankList.size();
+        return rankItemList.size();
     }
 
     public static void completePlayerRankUpdateSegment(RankingServiceRepositorySet repositorySet,

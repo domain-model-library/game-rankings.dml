@@ -1,6 +1,7 @@
 import dml.common.repository.TestCommonRepository;
 import dml.common.repository.TestCommonSingletonRepository;
 import dml.gamerankings.entity.PlayerRankingChangeItem;
+import dml.gamerankings.entity.RankItem;
 import dml.gamerankings.entity.PlayerRank;
 import dml.gamerankings.entity.PlayerRankingItem;
 import dml.gamerankings.repository.*;
@@ -79,7 +80,7 @@ public class Test {
                 new TestLeaderboard(),
                 topN, rankingFromHighToLow,
                 currentTime, 10);
-        PlayerRank topItem = result.getLeaderboard().getItemList().get(0);
+        RankItem topItem = result.getLeaderboard().getItemList().get(0);
         assert topItem.getPlayerId().equals(playerId10);
         assert topItem.getRank() == 1;
 
@@ -106,7 +107,7 @@ public class Test {
                 playerId10);
 
         //记录玩家排名变化
-        List<PlayerRank> allRankedItems = result.getAllRankedItems();
+        List<RankItem> allRankedItems = result.getAllRankedItems();
         RankingChangeService.recordRankingChange(rankingChangeServiceRepositorySet,
                 allRankedItems, topN, currentTime, 10);
 

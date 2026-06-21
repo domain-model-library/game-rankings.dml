@@ -3,7 +3,7 @@ package dml.gamerankings.service;
 import dml.gamerankings.entity.PlayerRankingChangeItem;
 import dml.gamerankings.entity.PlayerRankingChangeItemUpdateTask;
 import dml.gamerankings.entity.PlayerRankingChangeItemUpdateTaskSegment;
-import dml.gamerankings.entity.PlayerRank;
+import dml.gamerankings.entity.RankItem;
 import dml.gamerankings.repository.PlayerRankingChangeItemRepository;
 import dml.gamerankings.repository.PlayerRankingChangeItemUpdateTaskRepository;
 import dml.gamerankings.repository.PlayerRankingChangeItemUpdateTaskSegmentRepository;
@@ -35,7 +35,7 @@ public class RankingChangeService {
     }
 
     public static void recordRankingChange(RankingChangeServiceRepositorySet repositorySet,
-                                           List<PlayerRank> allRankedItems, int topN, long currentTime,
+                                           List<RankItem> allRankedItems, int topN, long currentTime,
                                            int itemsUpdateBatchSize) {
         PlayerRankingChangeItemRepository playerRankingChangeItemRepository = repositorySet.getPlayerRankingChangeItemRepository();
         PlayerRankingChangeItemUpdateTaskRepository playerRankingChangeItemUpdateTaskRepository = repositorySet.getPlayerRankingChangeItemUpdateTaskRepository();
@@ -45,16 +45,16 @@ public class RankingChangeService {
             return;
         }
         for (int i = 0; i < allRankedItems.size(); i++) {
-            PlayerRank playerRank = allRankedItems.get(i);
+            RankItem item = allRankedItems.get(i);
             if (i < topN) {
-                PlayerRankingChangeItem playerRankingChangeItem = playerRankingChangeItemRepository.take(playerRank.getPlayerId().toString());
-                playerRankingChangeItem.update(playerRank.getRank());
+                PlayerRankingChangeItem playerRankingChangeItem = playerRankingChangeItemRepository.take(item.getPlayerId().toString());
+                playerRankingChangeItem.update(item.getRank());
             } else {
                 break;
             }
         }
         //从allRankedItems中刨去topN个
-        List<PlayerRank> rankedItemsToUpdate = allRankedItems.subList(Math.min(topN, allRankedItems.size()), allRankedItems.size());
+        List<RankItem> rankedItemsToUpdate = allRankedItems.subList(Math.min(topN, allRankedItems.size()), allRankedItems.size());
 
         submitRankingChangeItemUpdateTask(
                 playerRankingChangeItemUpdateTaskRepository,
@@ -63,7 +63,7 @@ public class RankingChangeService {
     }
 
     public static void recordRankingChangeAnyWay(RankingChangeServiceRepositorySet repositorySet,
-                                                 List<PlayerRank> allRankedItems, int topN, long currentTime,
+                                                 List<RankItem> allRankedItems, int topN, long currentTime,
                                                  int itemsUpdateBatchSize) {
         PlayerRankingChangeItemRepository playerRankingChangeItemRepository = repositorySet.getPlayerRankingChangeItemRepository();
         PlayerRankingChangeItemUpdateTaskRepository playerRankingChangeItemUpdateTaskRepository = repositorySet.getPlayerRankingChangeItemUpdateTaskRepository();
@@ -73,22 +73,22 @@ public class RankingChangeService {
             return;
         }
         for (int i = 0; i < allRankedItems.size(); i++) {
-            PlayerRank playerRank = allRankedItems.get(i);
+            RankItem item = allRankedItems.get(i);
             if (i < topN) {
-                PlayerRankingChangeItem playerRankingChangeItem = playerRankingChangeItemRepository.take(playerRank.getPlayerId().toString());
+                PlayerRankingChangeItem playerRankingChangeItem = playerRankingChangeItemRepository.take(item.getPlayerId().toString());
                 if (playerRankingChangeItem == null) {
                     PlayerRankingChangeItem newPlayerRankingChangeItem = new PlayerRankingChangeItem();
-                    newPlayerRankingChangeItem.setPlayerId(playerRank.getPlayerId().toString());
-                    playerRankingChangeItem = playerRankingChangeItemRepository.takeOrPutIfAbsent(playerRank.getPlayerId().toString(),
+                    newPlayerRankingChangeItem.setPlayerId(item.getPlayerId().toString());
+                    playerRankingChangeItem = playerRankingChangeItemRepository.takeOrPutIfAbsent(item.getPlayerId().toString(),
                             newPlayerRankingChangeItem);
                 }
-                playerRankingChangeItem.update(playerRank.getRank());
+                playerRankingChangeItem.update(item.getRank());
             } else {
                 break;
             }
         }
         //从allRankedItems中刨去topN个
-        List<PlayerRank> rankedItemsToUpdate = allRankedItems.subList(Math.min(topN, allRankedItems.size()), allRankedItems.size());
+        List<RankItem> rankedItemsToUpdate = allRankedItems.subList(Math.min(topN, allRankedItems.size()), allRankedItems.size());
 
         submitRankingChangeItemUpdateTask(
                 playerRankingChangeItemUpdateTaskRepository,
@@ -99,7 +99,7 @@ public class RankingChangeService {
     private static void submitRankingChangeItemUpdateTask(
             PlayerRankingChangeItemUpdateTaskRepository playerRankingChangeItemUpdateTaskRepository,
             PlayerRankingChangeItemUpdateTaskSegmentRepository playerRankingChangeItemUpdateTaskSegmentRepository,
-            List<PlayerRank> rankedItemsToUpdate, long currentTime,
+            List<RankItem> rankedItemsToUpdate, long currentTime,
             int itemsUpdateBatchSize) {
         if (rankedItemsToUpdate == null || rankedItemsToUpdate.isEmpty()) {
             return;
@@ -112,10 +112,10 @@ public class RankingChangeService {
 
         for (int i = 0; i < rankedItemsToUpdate.size(); i += itemsUpdateBatchSize) {
             int endIdx = Math.min(i + itemsUpdateBatchSize, rankedItemsToUpdate.size());
-            List<PlayerRank> batch = rankedItemsToUpdate.subList(i, endIdx);
+            List<RankItem> batch = rankedItemsToUpdate.subList(i, endIdx);
             String segmentId = taskName + "-" + i;
             PlayerRankingChangeItemUpdateTaskSegment segment = new PlayerRankingChangeItemUpdateTaskSegment(segmentId);
-            segment.setPlayerRankList(new ArrayList<>(batch));
+            segment.setRankItemList(new ArrayList<>(batch));
             LargeScaleTaskService.addTaskSegment(largeScaleTaskServiceRepositorySet, taskName, segment);
         }
         LargeScaleTaskService.setTaskReadyToProcess(largeScaleTaskServiceRepositorySet, taskName);
@@ -205,11 +205,11 @@ public class RankingChangeService {
         if (segment == null) {
             return 0;
         }
-        List<PlayerRank> playerRankList = segment.getPlayerRankList();
-        if (playerRankList == null || playerRankList.isEmpty()) {
+        List<RankItem> rankItemList = segment.getRankItemList();
+        if (rankItemList == null || rankItemList.isEmpty()) {
             return 0;
         }
-        for (PlayerRank item : playerRankList) {
+        for (RankItem item : rankItemList) {
             PlayerRankingChangeItem existing = playerRankingChangeItemRepository.take(item.getPlayerId().toString());
             if (existing == null) {
                 PlayerRankingChangeItem newItem = new PlayerRankingChangeItem();
@@ -220,7 +220,7 @@ public class RankingChangeService {
                 existing.update(item.getRank());
             }
         }
-        return playerRankList.size();
+        return rankItemList.size();
     }
 
     public static void completePlayerRankingChangeItemUpdateSegment(RankingChangeServiceRepositorySet repositorySet,

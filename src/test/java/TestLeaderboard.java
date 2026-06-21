@@ -1,18 +1,18 @@
 import dml.gamerankings.entity.Leaderboard;
-import dml.gamerankings.entity.PlayerRank;
+import dml.gamerankings.entity.RankItem;
 
 import java.util.List;
 
 public class TestLeaderboard implements Leaderboard {
-    private List<PlayerRank> itemList;
+    private List<RankItem> itemList;
 
     @Override
-    public void setItemList(List<PlayerRank> itemList) {
+    public void setItemList(List<RankItem> itemList) {
         this.itemList = itemList;
     }
 
     @Override
-    public List<PlayerRank> getItemList() {
+    public List<RankItem> getItemList() {
         return itemList;
     }
 }

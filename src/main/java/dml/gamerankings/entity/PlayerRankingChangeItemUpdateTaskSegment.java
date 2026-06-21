@@ -7,7 +7,7 @@ import java.util.List;
 
 public class PlayerRankingChangeItemUpdateTaskSegment extends LargeScaleTaskSegmentBase {
     private String id;
-    private List<PlayerRank> playerRankList;
+    private List<RankItem> rankItemList;
 
     public PlayerRankingChangeItemUpdateTaskSegment() {
     }
@@ -25,11 +25,11 @@ public class PlayerRankingChangeItemUpdateTaskSegment extends LargeScaleTaskSegm
         return id;
     }
 
-    public List<PlayerRank> getPlayerRankList() {
-        return playerRankList;
+    public List<RankItem> getRankItemList() {
+        return rankItemList;
     }
 
-    public void setPlayerRankList(List<PlayerRank> playerRankList) {
-        this.playerRankList = playerRankList;
+    public void setRankItemList(List<RankItem> rankItemList) {
+        this.rankItemList = rankItemList;
     }
 }
